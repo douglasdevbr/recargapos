@@ -1,0 +1,707 @@
+<!-- App Name:: Recarga RP -->
+<!--- Author : Douglas Silva -->
+<!-- Date: 01/12/2016 -->
+
+<stringvariable value="filesetup.json" variable="sFilesetup" />
+<stringvariable value="" variable="sMessage" />
+<integervariable value="0" variable="LoginType" />
+
+<stringvariable value="" variable="sPosSerialNumber" />
+<stringvariable value="" variable="sUf" />
+<integervariable value="0" variable="sUfLength" />
+<stringvariable value="" variable="dsPassword" />
+<integervariable value="0" variable="iRet" />
+<integervariable value="0" variable="sBufferSize" />
+<integervariable value="0" variable="iConnect" />
+<integervariable value="0" variable="iReturn" />
+<stringvariable value="" variable="sBuffer" />
+<stringvariable value="" variable="sBufferReceive" />
+<integervariable value="0" variable="iMenu" />
+<stringvariable value="" variable="sBufReceived" />
+<integervariable value="0" variable="ifileProductTableSize" />
+<stringvariable value="" variable="sFileProductTableSize" />
+<stringvariable value="" variable="$(sDateUpdate)" />
+<integervariable value="0" variable="iTotalUser" />
+
+<!-- init app -->
+
+<callfunction name="FacedeApp" />
+<!-- init app -->
+
+<!-- Main Function -->
+<function name="FacedeApp">
+
+<!-- variables -->
+<integervariable value="0" variable="iFileSetupSize" />
+<stringvariable value="" variable="sFileSetupSize" /> 
+<integervariable value="0" variable="ICheckFile" />
+<stringvariable value=""   variable="sAuthData" />
+<integervariable value="0" variable="iRetFacade" />
+<integervariable value="0" variable="iAuthData" />
+
+<stringvariable value="77" variable="GNPrefix" />
+<stringvariable value="65" variable="OPPrefix" />
+
+<stringvariable value="" variable="AuthUserPassword" />
+
+<filesystem.filesize filename="$(sFilesetup)" variablereturn="$(iFileSetupSize)" />
+<inttostring variableinteger="$(iFileSetupSize)" variablestring="$(sFileSetupSize)" />
+
+
+<if variable="$(iFileSetupSize)" operator="lessthanorequalto" value="0">
+
+    <callfunction name="InitApp" />
+
+</if>
+
+<!-- checking the need of setup the application -->
+
+<!-- checking auth info -->
+
+<stringvariable value="" variable="sName" />
+<json.getelement filename="$(sFilesetup)" jsonstring="Auth" jsonvalue="$(sAuthData)" variablereturn="$(iRetFacade)" />
+<json.getelement filename="$(sFilesetup)" jsonstring="Name" jsonvalue="$(sName)" variablereturn="$(iRetFacade)" />
+
+<!--<cleandisplay />-->
+<!--<display line="0" column="0" message="display" />-->
+<!--<display line="1" column="0" message="$(sAuthData)" />-->
+<!--<waitkey />-->
+
+<string.length value="$(sAuthData)" variablereturn="$(iAuthData)" />
+<integervariable value="1" variable="loginTentativas" />
+<if variable="$(iAuthData)" operator="greaterthan" value="0">
+
+<!-- check the user was enable to aplly recharge -->
+<while variable="$(loginTentativas)" operator="lessthanorequalto" value="3">
+  
+  
+<!-- Sets  dsUSerPin -->
+   
+    <!-- <callfunction name="AuthUser" /> -->
+    <!-- cheking e admin user has pin -->
+  
+    <!-- Sets dsUser dsPassword -->
+    <callfunction name="AuthUser" />
+    <cleandisplay />
+    
+
+    <!-- cheking e admin user has logon -->
+   
+    <!--<display line="1" column="0" message="$(AuthUserLogin)"/>-->
+    <!--<waitkey />-->
+    <!---->
+   <!-- <string.getvaluebykey string="$(sAuthData)" key="$(AuthUserPassword)" variablereturn="$(AuthUserPassword)" /> -->
+    <cleandisplay />
+    
+    <if variable="$(AuthUserPassword)" operator="notequalto" value="">
+    <stringvariable value="" variable="$(sCurrentPin)" />
+    <stringvariable value="" variable="$(sCurrentPrefix)" />
+    <integervariable value="0" variable="iCurrentPassword" />
+       <string.elements string="$(sAuthData)" delimiter="|" variablereturn="$(iTotalUser)" />
+       
+       <while variable="$(iCurrentPassword)" operator="notequalto" value="$(iTotalUser)">
+          <string.elementat string="$(AuthUserPassword)" element_index="$(iCurrentPassword)" delimiter="|" variablereturn="$(sCurrentPin)" />
+         
+         <if variable="$(AuthUserPassword)" operator="equalto" value="$(sCurrentPin)">
+           <string.substring string="$(sCurrentPin)" start="0" length="2" variablereturn="$(sCurrentPrefix)" />
+            <if variable="$(sCurrentPrefix)" operator="equalto" value="$(OPPrefix)">
+              <integervariable value="2" variable="LoginType" />
+              <else />
+              <if variable="$(sCurrentPrefix)" operator="equalto" value="$(GNPrefix)">
+              <integervariable value="1" variable="LoginType" />
+              
+            </if>
+            
+            </if>
+            <break />
+        </if>
+         <mathematicaloperation variabledestination="$(iCurrentPassword)" operator="+" firstvalue="$(iCurrentPassword)" secondvalue="1" />
+       </while>
+      
+     </if>
+
+   <if variable="$(LoginType)" operator="equalto" value="0">
+      <cleandisplay />
+        <display line="0" column="0" message="Login invalido!" />
+        <display line="0" column="0" message="Tente novamente " />
+        <stringvariable value="" variable="dsPassword" />
+         <stringvariable value="" variable="dsPassword" />
+        <waitkey />
+   
+        <else />
+        <break />
+    
+   </if>
+        <mathematicaloperation firstvalue="$(loginTentativas)" operator="+" secondvalue="1" variabledestination="$(loginTentativas)"/>
+ </while>
+ 
+ <!-- check if the total logon tries was reach -->
+ <if variable="$(loginTentativas)" operator="equalto" value="3">
+   <cleandisplay />
+        <display line="0" column="0" message="Tentativas de login excedidas!" />
+        <waitkey />
+        
+   <exit />
+ </if>
+ 
+  
+</if>
+
+<!-- checking auth info -->
+<!-- display menu based on LoginType -->
+
+
+<if variable="$(LoginType)" operator="equalto" value="1">
+    <menuwithheader header="RedePay Recarga" timeoutheader="5"
+                    options="1.Imprimir Relatorio de Vendas \2.Atualizar Tabelas \3.Sair" timeout="30" variablereturn="$(iMenu)"/>
+    <!-- Print the list -->
+    <print message="$(iMenu)"/>
+   <if variable="$(iMenu)" operator="equalto" value="1">
+     <cleandisplay />
+     <display line="0" column="0" message="Relatorio de Vendas" />
+     <waitkey />
+     <exit />
+     
+   </if>
+  
+    <waitkey />
+ 
+</if>
+
+
+<if variable="$(LoginType)" operator="equalto" value="2">
+ <stringvariable value="" variable="sKey" />
+      <!-- phone inputs -->
+      <stringvariable  value="" variable="iPhone" />
+      <stringvariable  value="" variable="iPhone2" />
+      <!-- checks if need update product table the ( this goes happen one time per day) -->
+       <integervariable value="0" variable="iCheckFoneNumber" />
+      <!--<callfunction name="LoadProductTable" />-->
+      <integervariable value="0" variable="$(iMenuCarrier)" />
+      <stringvariable value="" variable="sMenuCarrier" />
+       <stringvariable value="" variable="sMenuChoice" />
+       <stringvariable value="" variable="sProductChoice" />
+      <json.getelement filename="$(sFilesetup)" jsonstring="Carriers" jsonvalue="$(sMenuCarrier)" variablereturn="$(iRet)" />
+      <!--<json.getelement filename="producttable.json" jsonstring="PhoneCarriers" jsonvalue="$(sMenuCarrier)" variablereturn="$(iRet)" />-->
+      <!-- Lock the main menu for the operator -->
+      
+     <cleandisplay />
+
+     <integervariable value="0" variable="iTotalCarriers" />
+     
+     <stringvariable value="" variable="sTotalCarriers" />
+     <stringvariable value="KEY_" variable="sExit" />
+     <string.replace original_string="$(sMenuCarrier)" old_substring="|" new_substring="\" variablereturn="$(sMenuCarrier)" />
+     <string.elements string="$(sMenuCarrier)" delimiter="\" variablereturn="$(iTotalCarriers)" />
+     <integeroperator operator="++" variablesource="$(iTotalCarriers)" />
+     <inttostring variableinteger="$(iTotalCarriers)" variablestring="$(sTotalCarriers)" />
+      <joinstring firstvalue="$(sMenuCarrier)" secondvalue="\" variabledestination="$(sMenuCarrier)" />
+     <joinstring firstvalue="$(sMenuCarrier)" secondvalue="$(sTotalCarriers)" variabledestination="$(sMenuCarrier)" />
+     
+     <joinstring firstvalue="$(sMenuCarrier)" secondvalue=".Sair" variabledestination="$(sMenuCarrier)" />
+    <joinstring firstvalue="$(sExit)" secondvalue="$(sTotalCarriers)" variabledestination="$(sExit)" />
+ 
+     <cleandisplay />
+     <if variable="$(sMenuCarrier)" operator="notequalto" value="">
+      <while variable="$(iMenuCarrier)" operator="equalto" value="0">
+        <!-- keys  KEY_1 KEY_9 KEY_EXTRA10 (*)  KEY_EXTRA11(#) -->
+           <!--  -->
+           <menuwithheader header="Escolha Operadora" options="$(sMenuCarrier)" timeoutheader="15" timeout="99999" variablereturn="$(sMenuChoice)" />
+           
+           
+           <!-- check if need exit app -->
+           <if variable="$(sMenuChoice)" operator="equalto" value="$(sExit)">
+           
+             <exit />
+           </if>
+           
+            <if variable="$(sMenuChoice)" operator="equalto" value="">
+           <exit />
+           </if>
+           
+           
+           <!-- gets a phone data --> 
+           <cleandisplay />
+           
+           <if variable="$(sMenuChoice)" operator="notequalto" value="">
+             
+           <display line="0" column="0" message="Digite DDD e Numero" />
+           <inputformat variable="$(iPhone)" line="1" column="0" message="" format="99-99999-9999" />
+            <!--<inputinteger column="0" line="1" maximum="" minimum="" variable="$(iPhone)" message="" />-->
+          
+            
+            <if variable="$(iPhone)" operator="notequalto" value=""> 
+            
+              <if variable="$(sMenuChoice)" operator="equalto" value="KEY_3">
+         
+                <!--- load the id 3  products -->
+                 <menuwithheader header="Recarga" options="1.CLARO SP 10\2.CLARO 20\3.CLARO 30" timeoutheader="14" timeout="20" variablereturn="$(sProductChoice)" />
+    
+              </if>
+              
+              <cleandisplay />
+              <display line="0" column="0" message="Confirma recarga" />
+                <display line="1" column="0" message="20 reais claro" />
+              <display line="2" column="0" message="1 Sim  2 Nao" />
+              <readkey miliseconds="10000" variablereturn="$(sKey)" />
+              
+          
+               <cleandisplay />
+               <display line="0" column="0" message="Confirme DDD e Numero" />
+               <inputformat variable="$(iPhone2)" line="1" column="0" message="" format="99-99999-9999" />
+
+               <!-- validate phone --> 
+               <callfunction name="PhoneValidate" />
+          <if variable="$(iCheckFoneNumber)" operator="equalto" value="1">
+           <!-- calls a method thats send a transactions --> 
+            <callfunction name="PrintReceipt" />
+           
+             <else />
+             <cleandisplay />
+             <display line="1" column="0" message="O Numero nao confere" />
+             <display line="2" column="0" message="Favor digitar novamente" />
+             <wait miliseconds="4000" />
+          
+              </if>
+              
+              <else />
+       
+            </if>
+        
+             
+           </if>
+           
+           <integervariable value="0" variable="$(iMenuCarrier)" />
+           <!-- depends of sMenuChoice variable -->  
+         
+          
+      </while>
+     <else />
+     <cleandisplay />
+     <display line="0" column="0" message="Erro Ao Listar operadoras" />
+       <wait miliseconds="2000" />
+     </if>
+      
+      
+      <waitkey />
+</if>
+
+<!-- display menu based on LoginType -->
+<callfunction name="fn_conn_disconnect" />
+  
+</function>
+
+        <!-- Main Function -->
+      
+      
+
+        <!-- display Functions -->
+
+
+<function name="PhoneValidate">
+  
+  <if variable="$(iPhone)" operator="equalto" value="$(iPhone2)">
+   <if variable="$(iPhone)" operator="greaterthan" value="0">
+      <integervariable value="1" variable="iCheckFoneNumber" />
+   </if>
+    <else />
+      <integervariable value="0" variable="iCheckFoneNumber" />
+   </if>
+  
+</function>
+<!-- Deprecated  -->        
+<function name="GetPhoneData">
+  <cleandisplay />
+   
+   <inputinteger column="1" line="0" maximum="11" minimum="10" variable="$(iPhone)" message="Numero: " />
+ 
+  <cleandisplay />
+   <inputinteger column="1" line="0" maximum="11" minimum="10" variable="$(iPhone2)" message="Confirme Numero: " />
+ 
+   <if variable="$(iPhone)" operator="equalto" value="$(iPhone2)">
+   <if variable="$(iPhone)" operator="greaternotequalto" value="0">
+      <integervariable value="1" variable="iCheckFoneNumber" />
+   </if>
+    <else />
+      <integervariable value="0" variable="iCheckFoneNumber" />
+   </if>
+  
+  
+</function>
+
+        
+<function name="HeaderApp">
+<display line="0" column="4" message="**REDE PAY** " />
+</function>
+
+<function name="FooterApp">
+<display line="10" column="0" message=" RedePay - 2016" />
+</function>
+
+
+        <!-- display Functions -->
+
+        <!-- Data Functions -->
+<function name="SaveSetupData">
+<string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
+<print message="sBufReceived" />
+<print message="$(sBufReceived)" />
+<system.beep />
+<waitkeytimeout seconds="3" />
+<integervariable value="0" variable="iFileHandle" />
+<integervariable value="0" variable="iBufferSize" />
+<integervariable value="0" variable="iJsonMsgSize" />
+<stringvariable value="" variable="sJsonMsg" />
+
+<string.length value="$(sBufReceived)" variablereturn="$(iJsonMsgSize)" /> 
+<string.tohex string="$(sBufReceived)" variablereturn="$(sJsonMsg)" />
+
+    <file.open mode="w" filename="$(sFilesetup)" variablehandle="$(iFileHandle)" />
+    <file.write handle="$(iFileHandle)" size="$(iJsonMsgSize)" buffer="$(sJsonMsg)" />
+    <file.close handle="$(iFileHandle)" />
+
+</function>
+        <!-- Data Functions -->
+
+
+        <!-- Business Functions -->
+
+        <!-- Function que que exibe um menu de configuraçao inicial -->
+<function name="InitApp">
+<cleandisplay />
+<display line="1" column="0" message="  Recarga Celular " />
+<display line="2" column="0" message="Inicializando Aplicacao...." />
+<!-- call a service that setup the a file with a merchant data  -->
+<callfunction name="InitAppService" />
+
+</function>
+
+<function name="AuthUser">
+
+<!-- get data form the user interface -->
+<cleandisplay />
+<display line="2" column="3" message="INSIRA O PIN" />
+<inputformat variable="$(dsPassword)" line="4" column="3" message="" format="******" />
+</function>
+
+
+
+<function name="LoadProductTable">
+  <!-- Check if need update Products Table -->
+  <!-- call a service and save data into bufferReceive Variable --> 
+  <filesystem.filesize filename="producttable.json" variablereturn="$(ifileProductTableSize)" />
+  <if variable="$(ifileProductTableSize)" operator="greaterthan" value="0"> 
+    <json.getelement filename="producttable.json" jsonstring="dt_update" jsonvalue="$(sDateUpdate)" variablereturn="$(iRet)" />
+    <stringvariable value="" variable="$(currentDate)" />
+    <getdatetime format="d/M/yy" variabledestination="$(currentDate)"/>
+    <cleandisplay />
+    <display line="0" column="0" message="$(currentDate)" />
+    <display line="1" column="0" message="$(sDateUpdate)" />
+    <waitkey />
+    <if variable="$(currentDate)" operator="notequalto" value="sDateUpdate">
+       <callfunction name="ProductTableService" />
+       <callfunction name="ProductTableSave" />
+      
+    </if>
+    <else />
+       <callfunction name="ProductTableService" />
+       <callfunction name="ProductTableSave" />
+    
+  </if>
+  
+  <!--<stringvariable value="1.Vivo \2.OI \3.Tim\ 4.Nextel \5.Sair" variable="sMenuCarrier" />-->
+    
+</function>
+
+<function name="PrintCarriers">
+  
+  <stringvariable value="sCarrierProducts" variable="1=" />
+ 
+  
+    <!-- Print the list -->
+    <print message="$(iMenu)"/>
+    
+
+</function>
+
+
+<function name="ProductTableSave">
+  <cleandisplay />
+  <display line="0" column="0" message="Atualizando tabela de produtos" />
+<deletefile filename="producttable.json" />
+
+
+<integervariable value="0" variable="iFileHandle" />
+<integervariable value="0" variable="iBufferSize" />
+<integervariable value="0" variable="iJsonMsgSize" />
+<stringvariable value="" variable="sJsonMsg" />
+
+	<string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
+<string.length value="$(sBufReceived)" variablereturn="$(iJsonMsgSize)" /> 
+<!--<cleandisplay />-->
+<!--<display line="0" column="0" message="$(sBufReceived)" />-->
+<!--<waitkey />-->
+<string.tohex string="$(sBufReceived)" variablereturn="$(sJsonMsg)" />
+
+
+    <file.open mode="w" filename="producttable.json" variablehandle="$(iFileHandle)" />
+    <file.write handle="$(iFileHandle)" size="$(iJsonMsgSize)" buffer="$(sJsonMsg)" />
+    <file.close handle="$(iFileHandle)" />
+
+
+</function>
+
+        <!-- Business Functions -->
+ 
+
+        <!-- Service Functions -->
+
+
+<function name="SellRecharge">
+  <cleandisplay />
+  <display line="0" column="0" message="Efetuando Recarga" />
+  <display line="1" column="0" message="" />
+  
+</function>
+
+<function name="ShowCarriesProducts">
+  <stringvariable value="" variable="$(sProducts)" />
+  <!--<json.getelement filename="producttable.json" jsonstring="Products" jsonvalue="$(sProducts)" variablereturn="$(iRet)" />-->
+  
+</function>
+
+<!-- preconnect -->
+<function name="preconnect">
+<preconnect variablestatus="$(iRet)" />
+<if variable="$(iRet)" operator="notequalto" value="0">
+    <cleandisplay />
+    <display line="0" column="0" message="Erro de comunicacao" />
+    <waitkeytimeout seconds="5" />
+    <network.hostdisconnect />
+    <exit />
+    <else />
+    <cleandisplay />
+    
+    <display line="1" column="3" message="Processando..." />
+</if>
+</function>
+
+<function name="ProductTableService">
+ 
+ <stringvariable value="" variable="merchantDDD" />
+ <json.getelement filename="$(sFilesetup)" jsonstring="DDD" jsonvalue="$(merchantDDD)" variablereturn="$(iRetFacade)" />
+  <stringvariable value="SP" variable="merchantDDD" />
+ <stringvariable value="POST /api/merchant/ProductTable?dsUF=" variable="sEndpointProductTablePos" />
+ <joinstring firstvalue="$(sBuffer)" secondvalue="$(sEndpointProductTablePos)" variabledestination="$(sBuffer)" />
+ <joinstring firstvalue="$(sBuffer)" secondvalue="$(merchantDDD)" variabledestination="$(sBuffer)" />
+ <cleandisplay />
+
+ <callfunction name="preconnect" />
+ <cleandisplay />
+ <display line="0" column="0" message="$(sBuffer)" />
+
+<string.tohex string="$(sBuffer)" variablereturn="$(sBuffer)" />
+<string.length value="$(sBuffer)" variablereturn="$(sBufferSize)" />
+
+<!-- send a message -->
+<network.send buffer="$(sBuffer)" size="$(sBufferSize)" variablereturn="$(iReturn)" />
+
+
+<if operator="equalto" value="1" variable="$(iReturn)">
+   <cleandisplay />
+   
+    <callfunction name="fn_bufferReceived" />
+    <cleandisplay />
+    <display line="0" column="0" message="Passou buffer receive table product" />
+    <waitkey />
+</if>
+ 
+</function>
+
+<function name="InitAppService">
+<!-- variables to teste porpouse -->
+<readfile filename="config.dat" key="numerodestepos" variabledestination="$(sPosSerialNumber)" />
+<!-- <stringvariable value="5649-98587-9858" variable="sPosSerialNumberTest" /> -->
+<!-- variables to teste porpouse -->
+<stringvariable value="POST /api/setup/init/?serialNumber=" variable="sEndpointSetupPos" />
+
+<!-- concat enpoint and parameters -->
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sEndpointSetupPos)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sPosSerialNumber)" variabledestination="$(sBuffer)" />
+
+<callfunction name="preconnect" />
+
+<string.tohex string="$(sBuffer)" variablereturn="$(sBuffer)" />
+<string.length value="$(sBuffer)" variablereturn="$(sBufferSize)" />
+
+<!-- send a message -->
+<network.send buffer="$(sBuffer)" size="$(sBufferSize)" variablereturn="$(iReturn)" />
+
+<if operator="equalto" value="1" variable="$(iReturn)">
+    <callfunction name="fn_bufferReceived" />
+    <callfunction name="SaveSetupData" />
+</if>
+</function>
+
+
+<!--- Load a ProductTable -->
+
+
+
+        <!-- Service Functions -->
+        <!-- Print Fuctions -->
+<function name="PrintMerchant">
+<stringvariable value="" variable="sDate" />
+<printbig message="Recarga" />
+<getdatetime format="d/M/yy" variabledestination="sDate" />
+<print message="sDate" />
+
+</function>
+
+<function name="PrintReceipt">
+<paperfeed />
+  <printbig message="RedePay" />
+  <getdatetime format="M/d/yy h:m:s" variabledestination="$(currentDate)" />
+  <print message="$(currentDate)" />
+  <print message="Bar do Douglas" />
+  <print message="10499858" />
+  <print message="Claro" />
+  <print message="20 R$" />
+  <print message="11 97909 4249"/>
+  <print message="NSU 80303" />
+  <print message="Validade 30 dias" />
+  <paperfeed />
+</function>
+
+        <!-- Print Fuctions -->
+
+
+
+<!--<deletefile filename="$(sFilesetup)" />-->
+
+<!-- fn_conn_disconnect -->
+<function name="fn_conn_disconnect">
+  <stringvariable value="" variable="sRet" />
+  <integervariable value="-1" variable="iConnected"/>
+
+  <readfile filename="config.dat" key="uclmedia" variabledestination="$(sRet)"/>
+
+  <if variable="$(sRet)" operator="equalto" value="LANDLINE">
+    <network.hostdisconnect />
+    <shutdownmodem />
+  <else />
+    <network.hostdisconnect />
+  </if>
+</function>
+
+<!-- ReadJson -->
+<function name="ReadJson">
+
+  
+<json.getelement filename="filesetup.json" jsonstring="Auth" jsonvalue="$(sAuthData)" variablereturn="$(iRetFacade)" />
+<json.getelement filename="filesetup.json" jsonstring="Name" jsonvalue="$(sName)" variablereturn="$(iRetFacade)" />
+   
+   <stringvariable value="" variable="sRetFacade" />
+   <inttostring variableinteger="$(iRetFacade)" variablestring="$(sRetFacade)" />
+    <display line="2" column="0" message="$(sRetFacade)" />
+       <display line="3" column="0" message="Auth" />
+     <display line="4" column="0" message="$(sAuthData)" />
+        <display line="5" column="0" message="Name" />
+     <display line="6" column="0" message="$(sName)" />
+    <waitkey />
+
+  
+</function>
+
+<!-- InitAppService -->
+
+
+
+<!-- fn_bufferReceived -->
+
+
+
+<function name="fn_bufferReceived">
+	<stringvariable value="" variable="sBufReceived" />
+	<stringvariable value="" variable="sBufReceivedTemp" />
+	<integervariable value="0" variable="iBytesReceive" />
+	<integervariable value="0" variable="iRetFind" />
+	<integervariable value="0" variable="iSize" />
+
+
+<cleandisplay />
+
+	<!-- Receive the 4 bytes of size -->
+	<network.receive variablebuffer="$(sBufReceived)" maxsize="4" variablereceivedbytes="$(iBytesReceive)" variablereturn="$(iRet)" />
+
+	<if variable="$(iRet)" operator="notequalto" value="1">
+		<cleandisplay />
+		<display line="2" column="0" message="   COMMUNICATION   " />
+		<display line="3" column="0" message="      ERROR!       " />
+		<waitkeytimeout seconds="5" />
+		<callfunction name="fn_conn_disconnect" />
+		<exit />
+	</if>
+
+	<!-- Receive the message -->
+	<string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
+	<convert.toint base="16" number="$(sBufReceived)" variablereturn="$(iSize)" />
+	<inttostring variableinteger="$(iSize)" variablestring="$(sRet)" />
+
+  <!-- check receive size -->
+	<!--<if variable="$(iSize)" operator="greaterthan" value="1024">-->
+	 
+	<!--	<integervariable value="0" variable="iBytesReceiveTemp" />-->
+	<!--	<integervariable value="0" variable="iSizeTemp" />-->
+	<!--	<stringvariable value="" variable="sBufReceivedTemp" />-->
+	<!--	<wait miliseconds="800" />-->
+	
+	<!--	<network.receive variablebuffer="$(sBufReceived)" maxsize="1000" variablereceivedbytes="$(iBytesReceive)" variablereturn="$(iRet)" />-->
+
+	<!--	<mathematicaloperation variabledestination="$(iSizeTemp)" operator="-" firstvalue="$(iSize)" secondvalue="1000" />-->
+
+	<!--	<network.receive variablebuffer="$(sBufReceivedTemp)" maxsize="$(iSizeTemp)" variablereceivedbytes="$(iBytesReceiveTemp)" variablereturn="$(iRet)" />-->
+	<!--	<string.fromhex string="$(sBufReceivedTemp)" variablereturn="$(sBufReceivedTemp)" />-->
+	
+
+	<!--<else />-->
+
+		<network.receive variablebuffer="$(sBufReceived)" maxsize="1024" variablereceivedbytes="$(iBytesReceive)" variablereturn="$(iRet)" />
+	<!--</if>--> 
+<wait miliseconds="800" />
+	<!-- check receive return -->
+	<if variable="$(iRet)" operator="notequalto" value="1">
+		<cleandisplay />
+		<display line="2" column="0" message="   ERRO  " />
+		<display line="3" column="0" message="       COMUNICACAO!     " />
+		<waitkeytimeout seconds="5" />
+		<callfunction name="fn_conn_disconnect" />
+		<exit />
+	</if>
+
+	<!-- convert from HEXASCII -->
+
+
+	<callfunction name="fn_conn_disconnect" />
+
+	<!-- check response -->
+  <if variable="$(sBufReceived)" operator="notequalto" value="">
+
+	<else />
+	  <cleandisplay />
+		<display line="2" column="0" message="   EMPTY RESPONSE  " />
+		<display line="3" column="0" message="       ERROR!     " />
+		<waitkeytimeout seconds="5" />
+		<callfunction name="fn_conn_disconnect" />
+		<exit />
+	</if>
+</function>
+
+
+
+<!-- SaveSetupData -->
+
+
+
+
+
