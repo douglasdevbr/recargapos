@@ -92,7 +92,7 @@
     <!---->
    <!-- <string.getvaluebykey string="$(sAuthData)" key="$(AuthUserPassword)" variablereturn="$(AuthUserPassword)" /> -->
     <cleandisplay />
-    
+    <stringvariable value="$(dsPassword)" variable="$(AuthUserPassword)" />
     <if variable="$(AuthUserPassword)" operator="notequalto" value="">
     <stringvariable value="" variable="$(sCurrentPin)" />
     <stringvariable value="" variable="$(sCurrentPrefix)" />
@@ -122,8 +122,8 @@
 
    <if variable="$(LoginType)" operator="equalto" value="0">
       <cleandisplay />
-        <display line="0" column="0" message="Login invalido!" />
-        <display line="0" column="0" message="Tente novamente " />
+        <display line="2" column="0" message="Pin invalido!" />
+        <display line="3" column="0" message="Tente novamente " />
         <stringvariable value="" variable="dsPassword" />
          <stringvariable value="" variable="dsPassword" />
         <waitkey />
@@ -138,7 +138,7 @@
  <!-- check if the total logon tries was reach -->
  <if variable="$(loginTentativas)" operator="equalto" value="3">
    <cleandisplay />
-        <display line="0" column="0" message="Tentativas de login excedidas!" />
+        <display line="2" column="0" message="Tentativas de login excedidas!" />
         <waitkey />
         
    <exit />
@@ -153,7 +153,7 @@
 
 <if variable="$(LoginType)" operator="equalto" value="1">
     <menuwithheader header="RedePay Recarga" timeoutheader="5"
-                    options="1.Imprimir Relatorio de Vendas \2.Atualizar Tabelas \3.Sair" timeout="30" variablereturn="$(iMenu)"/>
+                    options="1.Imprimir Relatorio de Vendas\2.Atualizar Tabelas\3.Sair" timeout="30" variablereturn="$(iMenu)"/>
     <!-- Print the list -->
     <print message="$(iMenu)"/>
    <if variable="$(iMenu)" operator="equalto" value="1">
@@ -170,7 +170,13 @@
 
 
 <if variable="$(LoginType)" operator="equalto" value="2">
+
+<stringvariable value="" variable="sCodeSell" />
+<stringvariable value="" variable="sCarrier" />
+<stringvariable value="" variable="sValue" />
+<stringvariable value="" variable="sProdName" />
  <stringvariable value="" variable="sKey" />
+ <integervariable value="0" variable="iPhoneLength" />
       <!-- phone inputs -->
       <stringvariable  value="" variable="iPhone" />
       <stringvariable  value="" variable="iPhone2" />
@@ -181,7 +187,7 @@
       <stringvariable value="" variable="sMenuCarrier" />
        <stringvariable value="" variable="sMenuChoice" />
        <stringvariable value="" variable="sProductChoice" />
-      <json.getelement filename="$(sFilesetup)" jsonstring="Carriers" jsonvalue="$(sMenuCarrier)" variablereturn="$(iRet)" />
+      <json.getelement filename="$(sFilesetup)" jsonstring="Car" jsonvalue="$(sMenuCarrier)" variablereturn="$(iRet)" />
       <!--<json.getelement filename="producttable.json" jsonstring="PhoneCarriers" jsonvalue="$(sMenuCarrier)" variablereturn="$(iRet)" />-->
       <!-- Lock the main menu for the operator -->
       
@@ -190,7 +196,11 @@
      <integervariable value="0" variable="iTotalCarriers" />
      
      <stringvariable value="" variable="sTotalCarriers" />
+     <stringvariable value="" variable="sTotalProducts" />
      <stringvariable value="KEY_" variable="sExit" />
+       <stringvariable value="" variable="$(sProductsFrag)" />
+     <integervariable value="0" variable="$(iProducts)" />
+       
      <string.replace original_string="$(sMenuCarrier)" old_substring="|" new_substring="\" variablereturn="$(sMenuCarrier)" />
      <string.elements string="$(sMenuCarrier)" delimiter="\" variablereturn="$(iTotalCarriers)" />
      <integeroperator operator="++" variablesource="$(iTotalCarriers)" />
@@ -204,8 +214,11 @@
      <cleandisplay />
      <if variable="$(sMenuCarrier)" operator="notequalto" value="">
       <while variable="$(iMenuCarrier)" operator="equalto" value="0">
+       <stringvariable value="" variable="$(iPhone)" />
+        <stringvariable value="" variable="$(iPhone2)" />
         <!-- keys  KEY_1 KEY_9 KEY_EXTRA10 (*)  KEY_EXTRA11(#) -->
            <!--  -->
+           <string.trim string="$(sMenuCarrier)" variablereturn="$(sMenuCarrier)" />
            <menuwithheader header="Escolha Operadora" options="$(sMenuCarrier)" timeoutheader="15" timeout="99999" variablereturn="$(sMenuChoice)" />
            
            
@@ -218,6 +231,9 @@
             <if variable="$(sMenuChoice)" operator="equalto" value="">
            <exit />
            </if>
+             <if variable="$(sMenuChoice)" operator="equalto" value="KEY_CANCEL">
+           <exit />
+           </if>
            
            
            <!-- gets a phone data --> 
@@ -226,45 +242,235 @@
            <if variable="$(sMenuChoice)" operator="notequalto" value="">
              
            <display line="0" column="0" message="Digite DDD e Numero" />
-           <inputformat variable="$(iPhone)" line="1" column="0" message="" format="99-99999-9999" />
+           <inputformat variable="$(iPhone)" line="1" column="0" message="" format="99999999999" />
             <!--<inputinteger column="0" line="1" maximum="" minimum="" variable="$(iPhone)" message="" />-->
           
+            <string.length value="$(iPhone)" variablereturn="$(iPhoneLength)" />
+            <if variable="$(iPhoneLength)" operator="greaterthanorequalto" value="10"> 
             
-            <if variable="$(iPhone)" operator="notequalto" value=""> 
+            <!-- TIM -->
+             <if variable="$(sMenuChoice)" operator="equalto" value="KEY_1">
+             <stringvariable value="TIM" variable="sCarrier" />
+             
+             <stringvariable value="M32!TIMTURBO 7!7.00!0|M53!TIM R$10!10.00!0|M55!TIM R$15!15.00!0|M56!TIM R$20!20.00!0|M57!TIM R$30!30.00!0" variable="$(sTIM)" />
             
-              <if variable="$(sMenuChoice)" operator="equalto" value="KEY_3">
+             <string.elements string="$(sTIM)" delimiter="|" variablereturn="$(iProducts)" />
+             <integervariable value="0" variable="iCount" />
+             <integervariable value="1" variable="iCounter" />
+              <stringvariable value="" variable="$(sTotalProducts)" />
+             <while variable="$(iCounter)" operator="lessthanorequalto" value="$(iProducts)">
+               <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+              
+               <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProductsFrag)" />
+               
+               <stringvariable value="" variable="$(sCounter)" />
+               <inttostring variableinteger="$(iCounter)" variablestring="$(sCounter)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sCounter)" variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="." variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sProductsFrag)" variabledestination="$(sTotalProducts)" />
+              <joinstring firstvalue="$(sTotalProducts)" secondvalue="\" variabledestination="$(sTotalProducts)" />
+              
+                <mathematicaloperation variabledestination="$(iCount)" operator="+" firstvalue="1" secondvalue="$(iCount)" />
+                <integeroperator operator="++" variablesource="$(iCounter)" />
+            
+             </while>
+             
+            <menuwithheader header="Recarga" options="$(sTotalProducts)" timeoutheader="14" timeout="20" variablereturn="$(sProductChoice)" />
+          
+             <stringvariable value="" variable="sIndexProduct" />
+           
+            <if variable="$(sProductChoice)" operator="notequalto" value="">
+       
+            <string.charat string="$(sProductChoice)" character_index="4" variablereturn="$(sIndexProduct)" />
+            <stringtoint variablestring="$(sIndexProduct)" variableinteger="$(iCount)" />
+            <integeroperator operator="--" variablesource="$(iCount)" />
+            <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+            <string.elementat string="$(sProductsFrag)" element_index="0" delimiter="!" variablereturn="$(sCodeSell)" />
+            <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProdName)" />
+            <string.elementat string="$(sProductsFrag)" element_index="2" delimiter="!" variablereturn="$(sValue)" />
+           
+            </if>
+            
+              
+             </if>
+              <!-- Claro --> 
+              <if variable="$(sMenuChoice)" operator="equalto" value="KEY_2">
+               <stringvariable value="Claro" variable="sCarrier" />
+                <stringvariable value="" variable="$(sTIM)" />
+                <stringvariable value="M42!CLARO R$10!10.00!0|M39!CLARO R$13!13.00!0|M59!CLARO R$15!15.00!0|M5!CLARO R$30!30.00!0" variable="$(sTIM)" />
          
                 <!--- load the id 3  products -->
-                 <menuwithheader header="Recarga" options="1.CLARO SP 10\2.CLARO 20\3.CLARO 30" timeoutheader="14" timeout="20" variablereturn="$(sProductChoice)" />
-    
-              </if>
+              <string.elements string="$(sTIM)" delimiter="|" variablereturn="$(iProducts)" />
+             <integervariable value="0" variable="iCount" />
+             <integervariable value="1" variable="iCounter" />
+              <stringvariable value="" variable="$(sTotalProducts)" />
+             <while variable="$(iCounter)" operator="lessthanorequalto" value="$(iProducts)">
+               <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
               
+               <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProductsFrag)" />
+               
+               <stringvariable value="" variable="$(sCounter)" />
+               <inttostring variableinteger="$(iCounter)" variablestring="$(sCounter)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sCounter)" variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="." variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sProductsFrag)" variabledestination="$(sTotalProducts)" />
+              <joinstring firstvalue="$(sTotalProducts)" secondvalue="\" variabledestination="$(sTotalProducts)" />
+              
+                <mathematicaloperation variabledestination="$(iCount)" operator="+" firstvalue="1" secondvalue="$(iCount)" />
+                <integeroperator operator="++" variablesource="$(iCounter)" />
+            
+             </while>
+             
+            <menuwithheader header="Recarga" options="$(sTotalProducts)" timeoutheader="14" timeout="20" variablereturn="$(sProductChoice)" />
+          
+             <stringvariable value="" variable="sIndexProduct" />
+           
+            <if variable="$(sProductChoice)" operator="notequalto" value="">
+       
+            <string.charat string="$(sProductChoice)" character_index="4" variablereturn="$(sIndexProduct)" />
+            <stringtoint variablestring="$(sIndexProduct)" variableinteger="$(iCount)" />
+            <integeroperator operator="--" variablesource="$(iCount)" />
+            <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+            <string.elementat string="$(sProductsFrag)" element_index="0" delimiter="!" variablereturn="$(sCodeSell)" />
+            <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProdName)" />
+            <string.elementat string="$(sProductsFrag)" element_index="2" delimiter="!" variablereturn="$(sValue)" />
+           
+            </if>
+    
+          </if>
+              
+               <!-- ViVo -->
+               <if variable="$(sMenuChoice)" operator="equalto" value="KEY_3">
+                  <stringvariable value="Vivo" variable="sCarrier" />
+                   <stringvariable value="" variable="$(sTIM)" />
+                   <stringvariable value="M36!VIVO R$5!5.00!0|M44!VIVO R$10!10.00!0|M41!VIVO R$15!15.00!0|M45!VIVO R$20!20.00!0" variable="$(sTIM)" />
+                   
+                   <!--- load the id 3  products -->
+              <string.elements string="$(sTIM)" delimiter="|" variablereturn="$(iProducts)" />
+             <integervariable value="0" variable="iCount" />
+             <integervariable value="1" variable="iCounter" />
+              <stringvariable value="" variable="$(sTotalProducts)" />
+             <while variable="$(iCounter)" operator="lessthanorequalto" value="$(iProducts)">
+               <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+              
+               <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProductsFrag)" />
+               
+               <stringvariable value="" variable="$(sCounter)" />
+               <inttostring variableinteger="$(iCounter)" variablestring="$(sCounter)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sCounter)" variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="." variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sProductsFrag)" variabledestination="$(sTotalProducts)" />
+              <joinstring firstvalue="$(sTotalProducts)" secondvalue="\" variabledestination="$(sTotalProducts)" />
+              
+                <mathematicaloperation variabledestination="$(iCount)" operator="+" firstvalue="1" secondvalue="$(iCount)" />
+                <integeroperator operator="++" variablesource="$(iCounter)" />
+            
+             </while>
+             
+            <menuwithheader header="Recarga" options="$(sTotalProducts)" timeoutheader="14" timeout="20" variablereturn="$(sProductChoice)" />
+          
+             <stringvariable value="" variable="sIndexProduct" />
+           
+            <if variable="$(sProductChoice)" operator="notequalto" value="">
+       
+            <string.charat string="$(sProductChoice)" character_index="4" variablereturn="$(sIndexProduct)" />
+            <stringtoint variablestring="$(sIndexProduct)" variableinteger="$(iCount)" />
+            <integeroperator operator="--" variablesource="$(iCount)" />
+            <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+            <string.elementat string="$(sProductsFrag)" element_index="0" delimiter="!" variablereturn="$(sCodeSell)" />
+            <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProdName)" />
+            <string.elementat string="$(sProductsFrag)" element_index="2" delimiter="!" variablereturn="$(sValue)" />
+           
+            </if>
+         
+              
+           </if>
+             <!-- Oi -->
+              <if variable="$(sMenuChoice)" operator="equalto" value="KEY_4">
+                   <stringvariable value="Oi" variable="sCarrier" />
+                    <stringvariable value="" variable="$(sTIM)" />
+                    <stringvariable value="1971!OI R$8!8.00!0|1488!OI R$10!10.00!0|1419!OI R$14!14.00!0|1929!OI R$18!18.00!0" variable="$(sTIM)" />
+                    
+                     <!--- load the id 3  products -->
+              <string.elements string="$(sTIM)" delimiter="|" variablereturn="$(iProducts)" />
+             <integervariable value="0" variable="iCount" />
+             <integervariable value="1" variable="iCounter" />
+              <stringvariable value="" variable="$(sTotalProducts)" />
+             <while variable="$(iCounter)" operator="lessthanorequalto" value="$(iProducts)">
+               <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+              
+               <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProductsFrag)" />
+               
+               <stringvariable value="" variable="$(sCounter)" />
+               <inttostring variableinteger="$(iCounter)" variablestring="$(sCounter)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sCounter)" variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="." variabledestination="$(sTotalProducts)" />
+               <joinstring firstvalue="$(sTotalProducts)" secondvalue="$(sProductsFrag)" variabledestination="$(sTotalProducts)" />
+              <joinstring firstvalue="$(sTotalProducts)" secondvalue="\" variabledestination="$(sTotalProducts)" />
+              
+                <mathematicaloperation variabledestination="$(iCount)" operator="+" firstvalue="1" secondvalue="$(iCount)" />
+                <integeroperator operator="++" variablesource="$(iCounter)" />
+            
+             </while>
+             
+            <menuwithheader header="Recarga" options="$(sTotalProducts)" timeoutheader="14" timeout="20" variablereturn="$(sProductChoice)" />
+          
+             <stringvariable value="" variable="sIndexProduct" />
+           
+            <if variable="$(sProductChoice)" operator="notequalto" value="">
+       
+            <string.charat string="$(sProductChoice)" character_index="4" variablereturn="$(sIndexProduct)" />
+            <stringtoint variablestring="$(sIndexProduct)" variableinteger="$(iCount)" />
+            <integeroperator operator="--" variablesource="$(iCount)" />
+            <string.elementat string="$(sTIM)" element_index="$(iCount)"  delimiter="|"   variablereturn="$(sProductsFrag)" />
+            <string.elementat string="$(sProductsFrag)" element_index="0" delimiter="!" variablereturn="$(sCodeSell)" />
+            <string.elementat string="$(sProductsFrag)" element_index="1" delimiter="!" variablereturn="$(sProdName)" />
+            <string.elementat string="$(sProductsFrag)" element_index="2" delimiter="!" variablereturn="$(sValue)" />
+           
+            </if>
+         
+             </if>
               <cleandisplay />
-              <display line="0" column="0" message="Confirma recarga" />
-                <display line="1" column="0" message="20 reais claro" />
-              <display line="2" column="0" message="1 Sim  2 Nao" />
+             <if variable="$(sCodeSell)" operator="notequalto" value="">
+               <if variable="$(sProdName)" operator="notequalto" value="">
+                 
+                     <display line="2" column="2" message="Confirma recarga" />
+                <display line="3" column="2" message="$(sProdName)" />
+              <display line="5" column="2" message="1 Sim  2 Nao" />
               <readkey miliseconds="10000" variablereturn="$(sKey)" />
               
           
                <cleandisplay />
+               <if variable="$(sKey)" operator="equalto" value="KEY_1">
+               <integervariable value="0" variable="countRetires" />
+               <while variable="$(countRetires)" operator="lessthanorequalto" value="2">
+                 
+              
                <display line="0" column="0" message="Confirme DDD e Numero" />
-               <inputformat variable="$(iPhone2)" line="1" column="0" message="" format="99-99999-9999" />
+               <inputformat variable="$(iPhone2)" line="1" column="0" message="" format="99999999999" />
 
                <!-- validate phone --> 
                <callfunction name="PhoneValidate" />
-          <if variable="$(iCheckFoneNumber)" operator="equalto" value="1">
-           <!-- calls a method thats send a transactions --> 
-            <callfunction name="PrintReceipt" />
-           
+                <if variable="$(iCheckFoneNumber)" operator="equalto" value="1">
+              <!-- calls a method thats send a transactions --> 
+             <callfunction name="SellRecharge" />
+             <break />
+          
              <else />
              <cleandisplay />
              <display line="1" column="0" message="O Numero nao confere" />
              <display line="2" column="0" message="Favor digitar novamente" />
-             <wait miliseconds="4000" />
-          
+             <wait miliseconds="2000" />
+             
+               </if>
+               <integeroperator operator="++" variablesource="$(countRetires)" />
+             
+                </while>
               </if>
-              
-              <else />
+            </if>
+             </if>
+             
+            <else />
        
             </if>
         
@@ -328,16 +534,6 @@
   
   
 </function>
-
-        
-<function name="HeaderApp">
-<display line="0" column="4" message="**REDE PAY** " />
-</function>
-
-<function name="FooterApp">
-<display line="10" column="0" message=" RedePay - 2016" />
-</function>
-
 
         <!-- display Functions -->
 
@@ -409,19 +605,8 @@
     
   </if>
   
-  <!--<stringvariable value="1.Vivo \2.OI \3.Tim\ 4.Nextel \5.Sair" variable="sMenuCarrier" />-->
-    
-</function>
 
-<function name="PrintCarriers">
-  
-  <stringvariable value="sCarrierProducts" variable="1=" />
- 
-  
-    <!-- Print the list -->
-    <print message="$(iMenu)"/>
     
-
 </function>
 
 
@@ -451,22 +636,64 @@
 
 </function>
 
-        <!-- Business Functions -->
- 
+<!-- Business Functions -->
 
-        <!-- Service Functions -->
-
+<!-- Service Functions -->
 
 <function name="SellRecharge">
+<stringvariable value="" variable="$(sBuffer)" />
   <cleandisplay />
-  <display line="0" column="0" message="Efetuando Recarga" />
-  <display line="1" column="0" message="" />
+  <display line="4" column="5" message="  PROCESSANDO   " />
+  <display line="5" column="5" message="----------------" />
+  <stringvariable value="" variable="phonePart" />
+  <integervariable value="0" variable="iValueTemp" />
+  <stringtoint variablestring="$(sValue)" variableinteger="$(iValueTemp)" />
+  <!-- mathematicaloperation variabledestination="$(iValueTemp)" operator="/" firstvalue="$(iValueTemp)" secondvalue="100" /> -->
+  <inttostring variableinteger="$(iValueTemp)" variablestring="$(sValue)" />
+  <string.substring string="$(iPhone)" start="0" length="2" variablereturn="$(phonePart)" />
+  <readfile filename="config.dat" key="numerodestepos" variabledestination="$(sPosSerialNumber)" />
+  <stringvariable value="POST api/transaction/create?cp=" variable="$(sPostSellRecharge)" />
+  
+  <stringvariable value="$(sCodeSell)" variable="$(params)" />
+  <!-- concat enpoint and parameters -->
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sPostSellRecharge)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sCodeSell)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;ddd=11" variabledestination="$(sBuffer)" />
+<!--<string.trim string="$(phonePart)" variablereturn="$(phonePart)" />-->
+<!--<joinstring firstvalue="$(sBuffer)" secondvalue="$(phonePart)" variabledestination="$(sBuffer)" />-->
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;phone=" variabledestination="$(sBuffer)" />
+<string.substring string="$(iPhone)" start="3" length="10" variablereturn="$(phonePart)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(phonePart)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;pos=" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sPosSerialNumber)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;user=" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(AuthUserPassword)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;carr=" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sCarrier)" variabledestination="$(sBuffer)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;total=" variabledestination="$(sBuffer)" />
+
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sValue)" variabledestination="$(sBuffer)" />
+
+<callfunction name="preconnect" />
+
+<string.tohex string="$(sBuffer)" variablereturn="$(sBuffer)" />
+<string.length value="$(sBuffer)" variablereturn="$(sBufferSize)" />
+
+<!-- send a message -->
+<network.send buffer="$(sBuffer)" size="$(sBufferSize)" variablereturn="$(iReturn)" />
+
+<if operator="equalto" value="1" variable="$(iReturn)">
+    <callfunction name="fn_bufferReceived" />
+    <string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
+    <callfunction name="PrintReceipt" />
+</if>
+  
   
 </function>
 
 <function name="ShowCarriesProducts">
   <stringvariable value="" variable="$(sProducts)" />
-  <!--<json.getelement filename="producttable.json" jsonstring="Products" jsonvalue="$(sProducts)" variablereturn="$(iRet)" />-->
+ 
   
 </function>
 
@@ -521,8 +748,7 @@
 <function name="InitAppService">
 <!-- variables to teste porpouse -->
 <readfile filename="config.dat" key="numerodestepos" variabledestination="$(sPosSerialNumber)" />
-<!-- <stringvariable value="5649-98587-9858" variable="sPosSerialNumberTest" /> -->
-<!-- variables to teste porpouse -->
+
 <stringvariable value="POST /api/setup/init/?serialNumber=" variable="sEndpointSetupPos" />
 
 <!-- concat enpoint and parameters -->
@@ -546,31 +772,67 @@
 
 <!--- Load a ProductTable -->
 
+<!-- Service Functions -->
+<!-- Print Fuctions -->
 
-
-        <!-- Service Functions -->
-        <!-- Print Fuctions -->
-<function name="PrintMerchant">
-<stringvariable value="" variable="sDate" />
-<printbig message="Recarga" />
-<getdatetime format="d/M/yy" variabledestination="sDate" />
-<print message="sDate" />
-
-</function>
 
 <function name="PrintReceipt">
-<paperfeed />
-  <printbig message="RedePay" />
-  <getdatetime format="M/d/yy h:m:s" variabledestination="$(currentDate)" />
+<cleandisplay />
+  <display line="4" column="5" message="  IMPRIMINDO   " />
+  <display line="5" column="5" message="----------------" />
+<stringvariable value="" variable="sTemp" />
+<stringvariable value="" variable="sDDD" />
+<stringvariable value="" variable="sPhone" />
+<integervariable value="0" variable="iTemp" />
+
+
+<string.elementat string="$(sBufReceived)" element_index="0" delimiter="|" variablereturn="$(sTemp)" />
+
+<wait miliseconds="800" />
+<if variable="$(sTemp)" operator="equalto" value="0">
+   
+   <json.getelement filename="filesetup.json" jsonstring="Name" jsonvalue="$(sName)" variablereturn="$(iRetFacade)" />
+        
+   <printbitmap filename="logo_redepay_prt.bmp" variablereturn="$(iRet)" />
+   <paperfeed />
+  
+  <getdatetime format="d/M/yy h:m:s" variabledestination="$(currentDate)" />
   <print message="$(currentDate)" />
-  <print message="Bar do Douglas" />
-  <print message="10499858" />
-  <print message="Claro" />
-  <print message="20 R$" />
-  <print message="11 97909 4249"/>
-  <print message="NSU 80303" />
-  <print message="Validade 30 dias" />
+  <print message="$(sName)" />
+  <string.elementat string="$(sBufReceived)"   element_index="1" delimiter="|" variablereturn="$(sTemp)" />
+  <print message="$(sTemp)" />
+  <string.elementat string="$(sBufReceived)" element_index="2" delimiter="|" variablereturn="$(sTemp)" />
+  <joinstring firstvalue="Operadora: " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+  <print message="$(sTemp)" />
+  <string.elementat string="$(sBufReceived)" element_index="3" delimiter="|" variablereturn="$(sTemp)" />
+
+   <stringtoint variablestring="$(sTemp)" variableinteger="$(iTemp)"/>
+  
+   <mathematicaloperation variabledestination="$(iTemp)" operator="/" firstvalue="$(iTemp)" secondvalue="100" />
+   <inttostring variableinteger="$(iTemp)" variablestring="$(sTemp)" />
+ 
+  <joinstring firstvalue="Valor R$ " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+  <!-- <joinstring firstvalue="$(sTemp)" secondvalue=" Reais" variabledestination="$(sTemp)" /> -->
+  <print message="$(sTemp)" />
+  <string.length value="$(iPhone)" variablereturn="$(iTemp)" />
+  <mathematicaloperation variabledestination="$(iTemp)" operator="-" firstvalue="$(iTemp)" secondvalue="2" />
+  <string.substring string="$(iPhone)" start="0" length="2" variablereturn="$(sDDD)" />
+
+  <string.substring string="$(iPhone)" start="3" length="$(iTemp)" variablereturn="$(sPhone)" />
+  <joinstring firstvalue="Numero:" secondvalue="$(sDDD)" variabledestination="$(sTemp)" />
+  <joinstring firstvalue="$(sTemp)" secondvalue=" " variabledestination="$(sTemp)" />
+  <joinstring firstvalue="$(sTemp)" secondvalue="$(sPhone)" variabledestination="$(sTemp)" />
+  <print message="$(sTemp)"/>
+  
+   <string.elementat string="$(sBufReceived)"   element_index="4" delimiter="|" variablereturn="$(sTemp)" />
+   <joinstring firstvalue="NSU " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+  <print message="$(sTemp)" />
+     <string.elementat string="$(sBufReceived)" element_index="5" delimiter="|" variablereturn="$(sTemp)" />
+  <print message="$(sTemp)" />
   <paperfeed />
+  
+  
+  </if>
 </function>
 
         <!-- Print Fuctions -->
@@ -615,10 +877,7 @@
 
 <!-- InitAppService -->
 
-
-
 <!-- fn_bufferReceived -->
-
 
 
 <function name="fn_bufferReceived">
