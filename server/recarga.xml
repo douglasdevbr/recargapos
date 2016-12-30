@@ -22,6 +22,9 @@
 <stringvariable value="" variable="sFileProductTableSize" />
 <stringvariable value="" variable="$(sDateUpdate)" />
 <integervariable value="0" variable="iTotalUser" />
+<stringvariable value="" variable="sModelName" />
+<stringvariable value="" variable="sTemp" />
+<integervariable value="0" variable="iTemp" />
 
 <!-- init app -->
 
@@ -41,6 +44,7 @@
 
 <stringvariable value="77" variable="GNPrefix" />
 <stringvariable value="65" variable="OPPrefix" />
+<stringvariable value="99" variable="SupportPrefix" />
 
 <stringvariable value="" variable="AuthUserPassword" />
 
@@ -113,6 +117,9 @@
             </if>
             
             </if>
+            <if variable="$(sCurrentPrefix)" operator="equalto" value="$(SupportPrefix)">
+             <integervariable value="3" variable="LoginType" />
+            </if>
             <break />
         </if>
          <mathematicaloperation variabledestination="$(iCurrentPassword)" operator="+" firstvalue="$(iCurrentPassword)" secondvalue="1" />
@@ -122,8 +129,8 @@
 
    <if variable="$(LoginType)" operator="equalto" value="0">
       <cleandisplay />
-        <display line="2" column="0" message="Pin invalido!" />
-        <display line="3" column="0" message="Tente novamente " />
+        <display line="2" column="2" message="PIN INVALIDO!" />
+        <display line="3" column="2" message="TENTE NOVAMENTE" />
         <stringvariable value="" variable="dsPassword" />
          <stringvariable value="" variable="dsPassword" />
         <waitkey />
@@ -155,16 +162,21 @@
     <menuwithheader header="RedePay Recarga" timeoutheader="5"
                     options="1.Imprimir Relatorio de Vendas\2.Atualizar Tabelas\3.Sair" timeout="30" variablereturn="$(iMenu)"/>
     <!-- Print the list -->
-    <print message="$(iMenu)"/>
-   <if variable="$(iMenu)" operator="equalto" value="1">
+    
+   <if variable="$(iMenu)" operator="equalto" value="KEY_1">
      <cleandisplay />
      <display line="0" column="0" message="Relatorio de Vendas" />
      <waitkey />
      <exit />
      
    </if>
-  
-    <waitkey />
+   
+     <if variable="$(iMenu)" operator="equalto" value="KEY_3">
+    
+     <exit />
+     
+   </if>
+   <waitkey />
  
 </if>
 
@@ -208,7 +220,7 @@
       <joinstring firstvalue="$(sMenuCarrier)" secondvalue="\" variabledestination="$(sMenuCarrier)" />
      <joinstring firstvalue="$(sMenuCarrier)" secondvalue="$(sTotalCarriers)" variabledestination="$(sMenuCarrier)" />
      
-     <joinstring firstvalue="$(sMenuCarrier)" secondvalue=".Sair" variabledestination="$(sMenuCarrier)" />
+     <joinstring firstvalue="$(sMenuCarrier)" secondvalue=".SAIR" variabledestination="$(sMenuCarrier)" />
     <joinstring firstvalue="$(sExit)" secondvalue="$(sTotalCarriers)" variabledestination="$(sExit)" />
  
      <cleandisplay />
@@ -248,11 +260,16 @@
             <string.length value="$(iPhone)" variablereturn="$(iPhoneLength)" />
             <if variable="$(iPhoneLength)" operator="greaterthanorequalto" value="10"> 
             
+            <if variable="$(iPhoneLength)" operator="lessthanorequalto" value="11">
+              
+              
+            
+            
             <!-- TIM -->
              <if variable="$(sMenuChoice)" operator="equalto" value="KEY_1">
              <stringvariable value="TIM" variable="sCarrier" />
              
-             <stringvariable value="M32!TIMTURBO 7!7.00!0|M53!TIM R$10!10.00!0|M55!TIM R$15!15.00!0|M56!TIM R$20!20.00!0|M57!TIM R$30!30.00!0" variable="$(sTIM)" />
+             <stringvariable value="M61!TIMTURBO 9!9.00!0|M53!TIM R$10!10.00!0|M55!TIM R$15!15.00!0|M56!TIM R$20!20.00!0|M57!TIM R$30!30.00!0" variable="$(sTIM)" />
             
              <string.elements string="$(sTIM)" delimiter="|" variablereturn="$(iProducts)" />
              <integervariable value="0" variable="iCount" />
@@ -434,17 +451,18 @@
              <if variable="$(sCodeSell)" operator="notequalto" value="">
                <if variable="$(sProdName)" operator="notequalto" value="">
                  
-                     <display line="2" column="2" message="Confirma recarga" />
+                     <display line="2" column="2" message="CONFIRMA RECARGA" />
                 <display line="3" column="2" message="$(sProdName)" />
-              <display line="5" column="2" message="1 Sim  2 Nao" />
+              <display line="5" column="2" message="1 SIM   2 NAO" />
               <readkey miliseconds="10000" variablereturn="$(sKey)" />
               
           
                <cleandisplay />
                <if variable="$(sKey)" operator="equalto" value="KEY_1">
                <integervariable value="0" variable="countRetires" />
+              <stringvariable value="$(iPhone)" variable="$(iPhone2)" />
                <while variable="$(countRetires)" operator="lessthanorequalto" value="2">
-                 
+              
               
                <display line="0" column="0" message="Confirme DDD e Numero" />
                <inputformat variable="$(iPhone2)" line="1" column="0" message="" format="99999999999" />
@@ -460,6 +478,7 @@
              <cleandisplay />
              <display line="1" column="0" message="O Numero nao confere" />
              <display line="2" column="0" message="Favor digitar novamente" />
+               <stringvariable value="$(iPhone2)" variable="" />
              <wait miliseconds="2000" />
              
                </if>
@@ -474,6 +493,7 @@
        
             </if>
         
+             </if>
              
            </if>
            
@@ -492,18 +512,19 @@
       <waitkey />
 </if>
 
+<if variable="$(LoginType)" operator="equalto" value="3">
+ <callfunction name="InitApp" />
+ <cleandisplay />
+ <display line="4" column="2" message="Estabecimento configurado." />
+ <wait miliseconds="2000" />
+ <exit />
+</if>
 <!-- display menu based on LoginType -->
 <callfunction name="fn_conn_disconnect" />
-  
 </function>
-
         <!-- Main Function -->
-      
-      
-
+   
         <!-- display Functions -->
-
-
 <function name="PhoneValidate">
   
   <if variable="$(iPhone)" operator="equalto" value="$(iPhone2)">
@@ -532,7 +553,6 @@
       <integervariable value="0" variable="iCheckFoneNumber" />
    </if>
   
-  
 </function>
 
         <!-- display Functions -->
@@ -540,10 +560,6 @@
         <!-- Data Functions -->
 <function name="SaveSetupData">
 <string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
-<print message="sBufReceived" />
-<print message="$(sBufReceived)" />
-<system.beep />
-<waitkeytimeout seconds="3" />
 <integervariable value="0" variable="iFileHandle" />
 <integervariable value="0" variable="iBufferSize" />
 <integervariable value="0" variable="iJsonMsgSize" />
@@ -566,7 +582,7 @@
 <function name="InitApp">
 <cleandisplay />
 <display line="1" column="0" message="  Recarga Celular " />
-<display line="2" column="0" message="Inicializando Aplicacao...." />
+<display line="2" column="1" message="Inicializando Aplicacao" />
 <!-- call a service that setup the a file with a merchant data  -->
 <callfunction name="InitAppService" />
 
@@ -576,8 +592,9 @@
 
 <!-- get data form the user interface -->
 <cleandisplay />
-<display line="2" column="3" message="INSIRA O PIN" />
-<inputformat variable="$(dsPassword)" line="4" column="3" message="" format="******" />
+<display line="2" column="2" message="INFORME " />
+<display line="3" column="2" message="OPERADOR OU SUPERVISOR" />
+<inputformat variable="$(dsPassword)" line="5" column="3" message="" format="******" />
 </function>
 
 
@@ -646,6 +663,7 @@
   <display line="4" column="5" message="  PROCESSANDO   " />
   <display line="5" column="5" message="----------------" />
   <stringvariable value="" variable="phonePart" />
+  <integervariable  value="0" variable="iphonepartLenght" />
   <integervariable value="0" variable="iValueTemp" />
   <stringtoint variablestring="$(sValue)" variableinteger="$(iValueTemp)" />
   <!-- mathematicaloperation variabledestination="$(iValueTemp)" operator="/" firstvalue="$(iValueTemp)" secondvalue="100" /> -->
@@ -658,11 +676,12 @@
   <!-- concat enpoint and parameters -->
 <joinstring firstvalue="$(sBuffer)" secondvalue="$(sPostSellRecharge)" variabledestination="$(sBuffer)" />
 <joinstring firstvalue="$(sBuffer)" secondvalue="$(sCodeSell)" variabledestination="$(sBuffer)" />
-<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;ddd=11" variabledestination="$(sBuffer)" />
-<!--<string.trim string="$(phonePart)" variablereturn="$(phonePart)" />-->
-<!--<joinstring firstvalue="$(sBuffer)" secondvalue="$(phonePart)" variabledestination="$(sBuffer)" />-->
+<joinstring firstvalue="$(sBuffer)" secondvalue="&amp;ddd=" variabledestination="$(sBuffer)" />
+<string.trim string="$(phonePart)" variablereturn="$(phonePart)" />
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(phonePart)" variabledestination="$(sBuffer)" />
 <joinstring firstvalue="$(sBuffer)" secondvalue="&amp;phone=" variabledestination="$(sBuffer)" />
-<string.substring string="$(iPhone)" start="3" length="10" variablereturn="$(phonePart)" />
+<string.length value="$(iPhone)" variablereturn="$(iphonepartLenght)" />
+<string.substring string="$(iPhone)" start="2" length="$(iphonepartLenght)" variablereturn="$(phonePart)" />
 <joinstring firstvalue="$(sBuffer)" secondvalue="$(phonePart)" variabledestination="$(sBuffer)" />
 <joinstring firstvalue="$(sBuffer)" secondvalue="&amp;pos=" variabledestination="$(sBuffer)" />
 <joinstring firstvalue="$(sBuffer)" secondvalue="$(sPosSerialNumber)" variabledestination="$(sBuffer)" />
@@ -673,6 +692,7 @@
 <joinstring firstvalue="$(sBuffer)" secondvalue="&amp;total=" variabledestination="$(sBuffer)" />
 
 <joinstring firstvalue="$(sBuffer)" secondvalue="$(sValue)" variabledestination="$(sBuffer)" />
+
 
 <callfunction name="preconnect" />
 
@@ -685,7 +705,28 @@
 <if operator="equalto" value="1" variable="$(iReturn)">
     <callfunction name="fn_bufferReceived" />
     <string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
-    <callfunction name="PrintReceipt" />
+    
+    <!-- check if transaction has approved --> 
+    <string.elementat string="$(sBufReceived)" element_index="0" delimiter="|" variablereturn="$(sTemp)" />
+    <if variable="$(sTemp)" operator="equalto" value="0">
+      <readfile filename="config.dat" key="model" variabledestination="$(sModelName)" />
+          <if variable="$(sModelName)" operator="equalto" value="E265">
+        <callfunction name="DisplayReceipt"/>
+       <else />
+       <callfunction name="PrintReceipt" />
+      </if>
+      <else />
+      
+        <!-- when error display recharge provider return error and restart operation -->
+        <cleandisplay />
+        <display line="2" column="2" message="FALHA NA TRANSACAO" />
+         <string.elementat string="$(sBufReceived)" element_index="1" delimiter="|" variablereturn="$(sTemp)" />
+        <joinstring firstvalue="COD:" secondvalue="$(sTemp)" variabledestination="&(sTemp)" />
+        <display line="3" column="2" message="$(sTemp)" />
+        <string.elementat string="$(sBufReceived)" element_index="2" delimiter="|" variablereturn="$(sTemp)" />
+        <display line="4" column="2" message="$(sTemp)" />
+        <display line="5" column="2" message="PRESSIONE VERDE PARA CONTINUAR" />
+    </if>
 </if>
   
   
@@ -709,7 +750,8 @@
     <else />
     <cleandisplay />
     
-    <display line="1" column="3" message="Processando..." />
+     <display line="4" column="5" message="  PROCESSANDO   " />
+     <display line="5" column="5" message="----------------" />
 </if>
 </function>
 
@@ -776,20 +818,88 @@
 <!-- Print Fuctions -->
 
 
-<function name="PrintReceipt">
+
+<function name="PrintReceiptPin">
 <cleandisplay />
   <display line="4" column="5" message="  IMPRIMINDO   " />
   <display line="5" column="5" message="----------------" />
-<stringvariable value="" variable="sTemp" />
+ <stringvariable value="" variable="pinddate" />
+
+   <printbitmap filename="logo_redepay_prt.bmp" variablereturn="$(iRet)" />
+   <paperfeed />
+  <getdatetime format="d/M/yy h:m:s" variabledestination="$(pinddate)" />
+  <print message="$(pinddate)" />
+  <print message="CASA DO AUDIO " />
+  <print message="COD COMPRA: 41044" />
+  <print message="OPERADORA: EMBRATEL" />
+  <print message="Valor R$ 30.00 " />
+  <print message="PIN: 64613TESTE549744" />
+  <print message="LOTE 8  SERIE  101408" />
+  <print message="Disque 0800-721-2177, aguarde instrucoes e digite a SENHA. Para DDD, digite o cod.cidade + telefone. Para DDI, digite 00 + cod.pais + cod.cidade + telefone. Atendimento 24h: 10321" />
+  <paperfeed />
+  
+</function>
+
+
+<function name="DisplayReceipt">
+  
+  <cleandisplay />
+  <display line="4" column="3" message="TRANSACAO COM SUCESSO" />
+
+  <wait miliseconds="1000" />
+  <cleandisplay />
+
 <stringvariable value="" variable="sDDD" />
 <stringvariable value="" variable="sPhone" />
-<integervariable value="0" variable="iTemp" />
+
+<wait miliseconds="200" />
+   <json.getelement filename="filesetup.json" jsonstring="Name" jsonvalue="$(sName)" variablereturn="$(iRetFacade)" />
+  <getdatetime format="d/M/yy h:m:s" variabledestination="$(currentDate)" />
+  <display line="0" column="2" message="$(currentDate)" />
+  <display line="1" column="2" message="$(sName)" />
+  <string.elementat string="$(sBufReceived)"   element_index="1" delimiter="|" variablereturn="$(sTemp)" />
+  <joinstring firstvalue="Cod Compra: " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+  <display line="2" column="2" message="$(sTemp)" />
+  <string.elementat string="$(sBufReceived)" element_index="2" delimiter="|" variablereturn="$(sTemp)" />
+  <joinstring firstvalue="Operadora: " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+ <display line="3" column="2" message="$(sTemp)" />
+  <string.elementat string="$(sBufReceived)" element_index="3" delimiter="|" variablereturn="$(sTemp)" />
+   <stringtoint variablestring="$(sTemp)" variableinteger="$(iTemp)"/>
+   <mathematicaloperation variabledestination="$(iTemp)" operator="/" firstvalue="$(iTemp)" secondvalue="100" />
+   <inttostring variableinteger="$(iTemp)" variablestring="$(sTemp)" />
+  <joinstring firstvalue="Valor R$ " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+  <!-- <joinstring firstvalue="$(sTemp)" secondvalue=" Reais" variabledestination="$(sTemp)" /> -->
+<display line="4" column="2" message="$(sTemp)" />
+  <string.length value="$(iPhone)" variablereturn="$(iTemp)" />
+  <mathematicaloperation variabledestination="$(iTemp)" operator="-" firstvalue="$(iTemp)" secondvalue="2" />
+  <string.substring string="$(iPhone)" start="0" length="2" variablereturn="$(sDDD)" />
+  <string.substring string="$(iPhone)" start="2" length="$(iTemp)" variablereturn="$(sPhone)" />
+  <joinstring firstvalue="Numero:" secondvalue="$(sDDD)" variabledestination="$(sTemp)" />
+  <joinstring firstvalue="$(sTemp)" secondvalue=" " variabledestination="$(sTemp)" />
+  <joinstring firstvalue="$(sTemp)" secondvalue="$(sPhone)" variabledestination="$(sTemp)" />
+  <display line="5" column="2" message="$(sTemp)" />
+   <string.elementat string="$(sBufReceived)"   element_index="4" delimiter="|" variablereturn="$(sTemp)" />
+   <joinstring firstvalue="NSU " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
+  <display line="6" column="2" message="$(sTemp)" />
+ <!--    <string.elementat string="$(sBufReceived)" element_index="5" delimiter="|" variablereturn="$(sTemp)" />-->
+ <!--<display line="7" column="2" message="$(sTemp)" />-->
+
+  <wait miliseconds="4000" />
+
+</function>
+
+<function name="PrintReceipt">
+<cleandisplay />
+
+<wait miliseconds="200" />
 
 
-<string.elementat string="$(sBufReceived)" element_index="0" delimiter="|" variablereturn="$(sTemp)" />
-
-<wait miliseconds="800" />
-<if variable="$(sTemp)" operator="equalto" value="0">
+     <display line="4" column="5" message="  IMPRIMINDO   " />
+   <display line="5" column="5" message="----------------" />
+   <stringvariable value="" variable="sTemp" />
+   <stringvariable value="" variable="sDDD" />
+   <stringvariable value="" variable="sPhone" />
+   <integervariable value="0" variable="iTemp" />
    
    <json.getelement filename="filesetup.json" jsonstring="Name" jsonvalue="$(sName)" variablereturn="$(iRetFacade)" />
         
@@ -800,6 +910,7 @@
   <print message="$(currentDate)" />
   <print message="$(sName)" />
   <string.elementat string="$(sBufReceived)"   element_index="1" delimiter="|" variablereturn="$(sTemp)" />
+  <joinstring firstvalue="Cod Compra: " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
   <print message="$(sTemp)" />
   <string.elementat string="$(sBufReceived)" element_index="2" delimiter="|" variablereturn="$(sTemp)" />
   <joinstring firstvalue="Operadora: " secondvalue="$(sTemp)" variabledestination="$(sTemp)" />
@@ -818,7 +929,7 @@
   <mathematicaloperation variabledestination="$(iTemp)" operator="-" firstvalue="$(iTemp)" secondvalue="2" />
   <string.substring string="$(iPhone)" start="0" length="2" variablereturn="$(sDDD)" />
 
-  <string.substring string="$(iPhone)" start="3" length="$(iTemp)" variablereturn="$(sPhone)" />
+  <string.substring string="$(iPhone)" start="2" length="$(iTemp)" variablereturn="$(sPhone)" />
   <joinstring firstvalue="Numero:" secondvalue="$(sDDD)" variabledestination="$(sTemp)" />
   <joinstring firstvalue="$(sTemp)" secondvalue=" " variabledestination="$(sTemp)" />
   <joinstring firstvalue="$(sTemp)" secondvalue="$(sPhone)" variabledestination="$(sTemp)" />
@@ -830,9 +941,7 @@
      <string.elementat string="$(sBufReceived)" element_index="5" delimiter="|" variablereturn="$(sTemp)" />
   <print message="$(sTemp)" />
   <paperfeed />
-  
-  
-  </if>
+
 </function>
 
         <!-- Print Fuctions -->
@@ -886,9 +995,6 @@
 	<integervariable value="0" variable="iBytesReceive" />
 	<integervariable value="0" variable="iRetFind" />
 	<integervariable value="0" variable="iSize" />
-
-
-<cleandisplay />
 
 	<!-- Receive the 4 bytes of size -->
 	<network.receive variablebuffer="$(sBufReceived)" maxsize="4" variablereceivedbytes="$(iBytesReceive)" variablereturn="$(iRet)" />
