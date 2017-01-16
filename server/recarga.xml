@@ -160,7 +160,7 @@
 
 <if variable="$(LoginType)" operator="equalto" value="1">
     <menuwithheader header="RedePay Recarga" timeoutheader="5"
-                    options="1.Imprimir Relatorio de Vendas\2.Atualizar Tabelas\3.Sair" timeout="30" variablereturn="$(iMenu)"/>
+                    options="1.Imprimir Relatorio de Vendas\2.Atualizar Tabelas\3.Sair\4.OP" timeout="30" variablereturn="$(iMenu)"/>
     <!-- Print the list -->
     
    <if variable="$(iMenu)" operator="equalto" value="KEY_1">
@@ -174,6 +174,32 @@
      <if variable="$(iMenu)" operator="equalto" value="KEY_3">
     
      <exit />
+     
+   </if>
+   
+    <if variable="$(iMenu)" operator="equalto" value="KEY_4">
+    <integervariable value="0" variable="ipt" />
+    <stringvariable value="" variable="svKey" />
+    <stringvariable value="" variable="svValue" />
+    <integervariable value="0" variable="iRet" />
+    <while variable="$(ipt)" operator="lessthanorequalto" value="10">
+       <readfilebyindex filename="producttable.dat" index="$(ipt)" variablekey="$(svKey)" variablevalue="$(svValue)" variablereturn="$(iRet)" />
+        <integeroperator operator="++" variablesource="$(ipt)" />
+       <if variable="$(iRet)" operator="equalto" value="0">
+        <cleandisplay />
+        <display line="0" column="0" message="nada trouxe" />
+        <waitkey />
+         <break />
+         <else />
+         <cleandisplay />
+         <display line="0" column="0" message="$(svKey)" />
+         <display line="2" column="0" message="$(svValue)" />
+        <waitkey />
+       
+       </if>
+    </while>
+   
+  
      
    </if>
    <waitkey />
@@ -262,8 +288,6 @@
             
             <if variable="$(iPhoneLength)" operator="lessthanorequalto" value="11">
               
-              
-            
             
             <!-- TIM -->
              <if variable="$(sMenuChoice)" operator="equalto" value="KEY_1">
@@ -513,7 +537,10 @@
 </if>
 
 <if variable="$(LoginType)" operator="equalto" value="3">
- <callfunction name="InitApp" />
+ 
+ <callfunction name="LoadProductTable" />
+<callfunction name="InitApp" />
+ 
  <cleandisplay />
  <display line="4" column="2" message="Estabecimento configurado." />
  <wait miliseconds="2000" />
@@ -555,7 +582,9 @@
   
 </function>
 
+
         <!-- display Functions -->
+
 
         <!-- Data Functions -->
 <function name="SaveSetupData">
@@ -573,6 +602,33 @@
     <file.close handle="$(iFileHandle)" />
 
 </function>
+
+<function name="ProductTableSave">
+  <cleandisplay />
+  <display line="0" column="0" message="Atualizando tabela de produtos" />
+<deletefile filename="producttable.dat" />
+
+
+<integervariable value="0" variable="iFileHandle" />
+<integervariable value="0" variable="iBufferSize" />
+<integervariable value="0" variable="iJsonMsgSize" />
+<stringvariable value="" variable="sJsonMsg" />
+
+	<string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
+<string.length value="$(sBufReceived)" variablereturn="$(iJsonMsgSize)" /> 
+<!--<cleandisplay />-->
+<!--<display line="0" column="0" message="$(sBufReceived)" />-->
+<!--<waitkey />-->
+<string.tohex string="$(sBufReceived)" variablereturn="$(sJsonMsg)" />
+
+
+    <file.open mode="w" filename="producttable.dat" variablehandle="$(iFileHandle)" />
+    <file.write handle="$(iFileHandle)" size="$(iJsonMsgSize)" buffer="$(sJsonMsg)" />
+    <file.close handle="$(iFileHandle)" />
+
+
+</function>
+
         <!-- Data Functions -->
 
 
@@ -602,22 +658,22 @@
 <function name="LoadProductTable">
   <!-- Check if need update Products Table -->
   <!-- call a service and save data into bufferReceive Variable --> 
-  <filesystem.filesize filename="producttable.json" variablereturn="$(ifileProductTableSize)" />
+  <filesystem.filesize filename="producttable.dat" variablereturn="$(ifileProductTableSize)" />
   <if variable="$(ifileProductTableSize)" operator="greaterthan" value="0"> 
-    <json.getelement filename="producttable.json" jsonstring="dt_update" jsonvalue="$(sDateUpdate)" variablereturn="$(iRet)" />
+    <!--<json.getelement filename="producttable.json" jsonstring="dt_update" jsonvalue="$(sDateUpdate)" variablereturn="$(iRet)" />-->
     <stringvariable value="" variable="$(currentDate)" />
-    <getdatetime format="d/M/yy" variabledestination="$(currentDate)"/>
-    <cleandisplay />
-    <display line="0" column="0" message="$(currentDate)" />
-    <display line="1" column="0" message="$(sDateUpdate)" />
-    <waitkey />
+    <!--<getdatetime format="d/M/yy" variabledestination="$(currentDate)"/>-->
+    <!--<cleandisplay />-->
+    <!--<display line="0" column="0" message="$(currentDate)" />-->
+    <!--<display line="1" column="0" message="$(sDateUpdate)" />-->
+    <!--<waitkey />-->
     <if variable="$(currentDate)" operator="notequalto" value="sDateUpdate">
-       <callfunction name="ProductTableService" />
+       <callfunction name="LoadProductTableService" />
        <callfunction name="ProductTableSave" />
       
     </if>
     <else />
-       <callfunction name="ProductTableService" />
+       <callfunction name="LoadProductTableService" />
        <callfunction name="ProductTableSave" />
     
   </if>
@@ -627,31 +683,7 @@
 </function>
 
 
-<function name="ProductTableSave">
-  <cleandisplay />
-  <display line="0" column="0" message="Atualizando tabela de produtos" />
-<deletefile filename="producttable.json" />
 
-
-<integervariable value="0" variable="iFileHandle" />
-<integervariable value="0" variable="iBufferSize" />
-<integervariable value="0" variable="iJsonMsgSize" />
-<stringvariable value="" variable="sJsonMsg" />
-
-	<string.fromhex string="$(sBufReceived)" variablereturn="$(sBufReceived)" />
-<string.length value="$(sBufReceived)" variablereturn="$(iJsonMsgSize)" /> 
-<!--<cleandisplay />-->
-<!--<display line="0" column="0" message="$(sBufReceived)" />-->
-<!--<waitkey />-->
-<string.tohex string="$(sBufReceived)" variablereturn="$(sJsonMsg)" />
-
-
-    <file.open mode="w" filename="producttable.json" variablehandle="$(iFileHandle)" />
-    <file.write handle="$(iFileHandle)" size="$(iJsonMsgSize)" buffer="$(sJsonMsg)" />
-    <file.close handle="$(iFileHandle)" />
-
-
-</function>
 
 <!-- Business Functions -->
 
@@ -665,6 +697,7 @@
   <stringvariable value="" variable="phonePart" />
   <integervariable  value="0" variable="iphonepartLenght" />
   <integervariable value="0" variable="iValueTemp" />
+  <stringvariable value="" variable="s2ViaOption" />
   <stringtoint variablestring="$(sValue)" variableinteger="$(iValueTemp)" />
   <!-- mathematicaloperation variabledestination="$(iValueTemp)" operator="/" firstvalue="$(iValueTemp)" secondvalue="100" /> -->
   <inttostring variableinteger="$(iValueTemp)" variablestring="$(sValue)" />
@@ -713,7 +746,16 @@
       <if variable="$(sModelName)" operator="equalto" value="E265">
         <callfunction name="DisplayReceipt"/>
        <else />
-       <callfunction name="PrintReceipt" />
+         <callfunction name="PrintReceipt" />
+          <cleandisplay />
+          <display line="2" column="2" message="Deseja Imprimir  " />
+           <display line="3" column="2" message="Segunda Via ?" />
+          <display line="4" column="2" message="1 SIM  " />
+           <display line="5" column="2" message="ou outra tecla para sair" />
+         <readkey miliseconds="10000" variablereturn="$(s2ViaOption)" />
+         <if variable="$(s2ViaOption)" operator="equalto" value="KEY_1">
+           <callfunction name="PrintReceipt" />
+         </if>
       </if>
       <else />
       
@@ -755,7 +797,7 @@
 </if>
 </function>
 
-<function name="ProductTableService">
+<function name="ProductTableServiceDeprecated">
  
  <stringvariable value="" variable="merchantDDD" />
  <json.getelement filename="$(sFilesetup)" jsonstring="DDD" jsonvalue="$(merchantDDD)" variablereturn="$(iRetFacade)" />
@@ -787,6 +829,25 @@
  
 </function>
 
+<function name="LoadProductTableService">
+  <stringvariable value="POST /api/setup/loadproducttable" variable="sEndpointSetupPos" />
+  <!-- concat enpoint and parameters -->
+<joinstring firstvalue="$(sBuffer)" secondvalue="$(sEndpointSetupPos)" variabledestination="$(sBuffer)" />
+<callfunction name="preconnect" />
+
+<string.tohex string="$(sBuffer)" variablereturn="$(sBuffer)" />
+<string.length value="$(sBuffer)" variablereturn="$(sBufferSize)" />
+
+<!-- send a message -->
+<network.send buffer="$(sBuffer)" size="$(sBufferSize)" variablereturn="$(iReturn)" />
+
+<if operator="equalto" value="1" variable="$(iReturn)">
+    <callfunction name="fn_bufferReceived" />
+   
+</if>
+  
+</function>
+
 <function name="InitAppService">
 <!-- variables to teste porpouse -->
 <readfile filename="config.dat" key="numerodestepos" variabledestination="$(sPosSerialNumber)" />
@@ -811,6 +872,13 @@
 </if>
 </function>
 
+<!-- has a sale reports that overflow by 30 days -->
+<function name="SaleReport">
+<stringvariable value="" variable="$(reportDate)" />
+<getdatetime format="d/M/yy" variabledestination="$(reportDate)" />
+
+  
+</function>
 
 <!--- Load a ProductTable -->
 
@@ -893,8 +961,8 @@
 
 <wait miliseconds="200" />
 
-
-     <display line="4" column="5" message="  IMPRIMINDO   " />
+     
+   <display line="4" column="5" message="  IMPRIMINDO    " />
    <display line="5" column="5" message="----------------" />
    <stringvariable value="" variable="sTemp" />
    <stringvariable value="" variable="sDDD" />
@@ -941,6 +1009,8 @@
      <string.elementat string="$(sBufReceived)" element_index="5" delimiter="|" variablereturn="$(sTemp)" />
   <print message="$(sTemp)" />
   <paperfeed />
+  
+  
 
 </function>
 
